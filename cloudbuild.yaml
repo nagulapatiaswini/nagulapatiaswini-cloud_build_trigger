@@ -1,64 +1,40 @@
-apiVersion: serving.knative.dev/v1
-kind: Service
-metadata:
-  name: demo1
-  namespace: '155354774894'
-  selfLink: /apis/serving.knative.dev/v1/namespaces/155354774894/services/demo1
-  uid: 5f15c542-52f7-43c2-8045-694b3d3c0926
-  resourceVersion: AAXt5apcs6o
-  generation: 1
-  creationTimestamp: '2022-11-20T11:58:59.113736Z'
-  labels:
-    cloud.googleapis.com/location: us-central1
-  annotations:
-    run.googleapis.com/client-name: cloud-console
-    serving.knative.dev/creator: nagulapati_aswini@persistent.com
-    serving.knative.dev/lastModifier: nagulapati_aswini@persistent.com
-    client.knative.dev/user-image: gcr.io/solution-kit-11/demo1:v1
-    run.googleapis.com/ingress: all
-    run.googleapis.com/ingress-status: all
-spec:
-  template:
-    metadata:
-      name: demo1-00001-gof
-      annotations:
-        run.googleapis.com/client-name: cloud-console
-        autoscaling.knative.dev/minScale: '3'
-        autoscaling.knative.dev/maxScale: '5'
-    spec:
-      containerConcurrency: 80
-      timeoutSeconds: 300
-      serviceAccountName: 155354774894-compute@developer.gserviceaccount.com
-      containers:
-      - image: gcr.io/solution-kit-11/demo1:v1
-      ports:
-        - name: http1
-          containerPort: 5000
-        resources:
-          limits:
-            cpu: 1000m
-            memory: 512Mi
-  traffic:
-  - percent: 100
-    latestRevision: true
-status:
-  observedGeneration: 1
-  conditions:
-  - type: Ready
-    status: 'True'
-    lastTransitionTime: '2022-11-20T11:59:05.049002Z'
-  - type: ConfigurationsReady
-  status: 'True'
-    lastTransitionTime: '2022-11-20T11:59:04.728499Z'
-  - type: RoutesReady
-    status: 'True'
-    lastTransitionTime: '2022-11-20T11:59:05.049002Z'
-  latestReadyRevisionName: demo1-00001-gof
-  latestCreatedRevisionName: demo1-00001-gof
-  traffic:
-  - revisionName: demo1-00001-gof
-    percent: 100
-    latestRevision: true
-  url: https://demo1-opd3f7dseq-uc.a.run.app
-  address:
-    url: https://demo1-opd3f7dseq-uc.a.run.app
+steps:
+#First Clone from Google Cloud Source Repository  
+- name: 'gcr.io/cloud-builders/git'
+  args: ['clone','https://source.developers.google.com/p/${_PROJECT}/r/${_REPO_NAME}']
+
+#Build the image 
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build','-t','gcr.io/${_PROJECT}/${_CONTAINERNAME}:${_VERSION}','.']
+
+#Push the image  
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push','gcr.io/${_PROJECT}/${_CONTAINERNAME}:${_VERSION}']
+  
+#Update the container image using kubectl set
+- name: 'gcr.io/cloud-builders/kubectl'
+  args:
+  - 'set'
+  - 'image'
+  - 'deployment/${_DEPLOYMENTNAME}'
+  - '${_CONTAINERNAME}=gcr.io/${_PROJECT}/${_CONTAINERNAME}:${_VERSION}'
+  env:
+  - 'CLOUDSDK_COMPUTE_ZONE=${_ZONE}'
+  - 'CLOUDSDK_CONTAINER_CLUSTER=${_GKE_CLUSTER}'
+  
+substitutions:
+    #GCP Specific configuration. Please DON'T change anything
+    _PROJECT: solution-kit-11
+    _ZONE: us-central1-c
+    _GKE_CLUSTER: aswini-finalassessment
+    
+    #Repository Specific configuration. DevOps can change this settings
+    _DEPLOYMENTNAME: hello-python
+    _CONTAINERNAME: hello-python    
+    _REPO_NAME: demo1
+    
+    # Developers ONLY change
+    _VERSION: v1.0
+    
+options:
+    substitution_option: 'ALLOW_LOOSE'
