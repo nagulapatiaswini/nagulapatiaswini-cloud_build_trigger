@@ -15,6 +15,6 @@ steps:
     - '--image'
     - 'gcr.io/solution-kit-11/hello-python:$COMMIT_SHA'
     - '--region'
-    - 'ue-central1'
+    - 'us-central1'
   images:
   - 'gcr.io/solution-kit-11/hello-python:$COMMIT_SHA'
